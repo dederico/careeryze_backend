@@ -15,6 +15,8 @@ import GPT3TokenizerImport from "gpt3-tokenizer";
 import util from 'util';
 // Authentication module import
 import jwt from "jsonwebtoken";
+// CORS
+import cors from "cors";
 
 
 import bcrypt from 'bcrypt';
@@ -118,7 +120,7 @@ dotenv.config();
 const port = 8000;
 const app = express();
 app.use(bodyParser.json());
-const cors = require('cors');
+// const cors = require('cors');
 app.use(cors({
   origin: "https://careeryze-frontend.herokuapp.com",
 })
