@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "npm i --save-dev @types/jsonwebtoken & npm i --save-dev @types/bcrypt && npm run build && npm run start-dev",
+    "start": "npm i --save-dev @types/jsonwebtoken & npm i --save-dev @types/bcrypt && npm run build && npm run start-dev && echo YOLO",
     "build": "npm install && npm install -g typescript && tsc",
     "start-dev": "ts-node --esm src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
