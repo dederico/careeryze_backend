@@ -24,7 +24,7 @@ function getTokens(input: string): number {
 
 dotenv.config();
 
-const port = 8000;
+const port = process.env.PORT || 80;
 const app = express();
 app.use(bodyParser.json());
 app.use(
