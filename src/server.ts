@@ -96,7 +96,7 @@ app.post("/api/chat", async (req: Request, res: Response) => {
       return res.status(400).send("Message is inappropriate");
     }
 
-    const prompt = getPrompt(conversationState).replace(/\r\n/g, '');
+    const prompt = getPrompt(conversationState).replace(/\r?\n|\r/g, "");
 
     tokenCount += getTokens(prompt);
     if (tokenCount > 4000) {
