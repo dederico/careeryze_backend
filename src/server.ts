@@ -88,7 +88,7 @@ app.post("/api/chat", async (req: Request, res: Response) => {
   } catch (error) {
     if (error instanceof Error) {
       // @ts-ignore
-      console.log(error.toJSON());
+      console.error(error);
     }
     res.status(500).send("Something went wrong");
   }
