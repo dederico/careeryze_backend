@@ -102,27 +102,28 @@ app.post("/api/chat", async (req: Request, res: Response) => {
 
       currentQuestionIndex++;
       res.json({ message: completion.data.choices[0].text });
-    } else {
-      // If we have finished all the questions, just send a confirmation message
-      const apiRequestBody: CreateChatCompletionRequest = {
-        model: "text-davinci-002",
-        messages: [
-
-          {role: "system", content: "Gracias por responder todas las preguntas."},
-          ...requestMessages,
-        ],
-        max_tokens: 100,
-        temperature: 0.5,
-        n: 1,
-        stream: false,
-        stop: ["\n"],
-        presence_penalty: 0.6,
-        frequency_penalty: 0.6,
-      };
-      const completion = await openai.createCompletion(apiRequestBody);
-
-      res.json({ message: completion.data.choices[0].text });
     }
+
+    // Otherwise, if we have finished all the questions, just send a confirmation message
+    const apiRequestBody: CreateChatCompletionRequest = {
+      model: "text-davinci-002",
+      messages: [
+
+        {role: "system", content: "Gracias por responder todas las preguntas."},
+        ...requestMessages,
+      ],
+      max_tokens: 100,
+      temperature: 0.5,
+      n: 1,
+      stream: false,
+      stop: ["\n"],
+      presence_penalty: 0.6,
+      frequency_penalty: 0.6,
+    };
+    const completion = await openai.createCompletion(apiRequestBody);
+
+    res.json({ message: completion.data.choices[0].text });
+
   } catch (error) {
     if (error instanceof Error) {
       console.error(error);
