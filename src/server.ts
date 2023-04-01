@@ -40,10 +40,10 @@ const openai = new OpenAIApi(configuration);
 
 // Define an array of questions
 const questions = [
-  "Cuáles son tus hobbies e intereses?",
-  "Cuáles son tus habilidades y fortalezas? Eres bueno con los números, con la comunicación, resolviendo problemas o en trabajos manuales?",
-  "Prefieres trabajar solo o en equipo? Estás más interesado en trabajar en una oficina o al aire libre?",
-  "Cuál es tu nivel más alto de estudios? Tienes algún certificado, entrenamiento o bootcamp?",
+  "What are your hobbies and interests?",
+  "What are your skills and strengths? Are you good with numbers, communication, problem solving, or hands-on work?",
+  "Do you prefer to work alone or in a team? Are you more interested in working in an office or outdoors?",
+  "What is your highest level of education? Do you have any certificates, trainings, or bootcamps?",
 ];
 
 // Define a function to get the next question based on the current index
@@ -51,7 +51,7 @@ function getNextQuestion(currentIndex: number): string {
   if (currentIndex < questions.length) {
     return questions[currentIndex];
   }
-  return "Ya hemos terminado con las preguntas. ¿Hay algo más en lo que pueda ayudarte?";
+  return "We're done with the questions. Is there anything else I can help you with?";
 }
 
 // Define a variable to keep track of the current question index
@@ -85,30 +85,43 @@ app.post("/api/chat", async (req: Request, res: Response) => {
       }
 
       const apiRequestBody: CreateChatCompletionRequest = {
-        model: "gpt-3.5-turbo",
+        model: "text-davinci-002",
         messages: [
-          { role: "system", content: prompt },
-          ...requestMessages,
+          { role: "system", content: " Gracias por responser todas las preguntas"},
+          ...requestMessages
         ],
-        temperature: 0.6,
+        max_tokens: 150,
+        temperature: 0.5,
+        n: 1,
+        stream: false,
+        stop: ["\n"],
+        presence_penalty: 0.6,
+        frequency_penalty: 0.6,
       };
-      const completion = await openai.createChatCompletion(apiRequestBody);
+      const completion = await openai.createCompletion(apiRequestBody);
 
       currentQuestionIndex++;
-      res.json(completion.data);
+      res.json({ message: completion.data.choices[0].text });
     } else {
       // If we have finished all the questions, just send a confirmation message
       const apiRequestBody: CreateChatCompletionRequest = {
-        model: "davinci",
+        model: "text-davinci-002",
         messages: [
-          { role: "system", content: "Gracias por responder todas las preguntas." },
+
+          {role: "system", content: "Gracias por responder todas las preguntas."},
           ...requestMessages,
         ],
-        temperature: 0.6,
+        max_tokens: 100,
+        temperature: 0.5,
+        n: 1,
+        stream: false,
+        stop: ["\n"],
+        presence_penalty: 0.6,
+        frequency_penalty: 0.6,
       };
-      const completion = await openai.createChatCompletion(apiRequestBody);
+      const completion = await openai.createCompletion(apiRequestBody);
 
-      res.json(completion.data);
+      res.json({ message: completion.data.choices[0].text });
     }
   } catch (error) {
     if (error instanceof Error) {
@@ -122,4 +135,3 @@ app.post("/api/chat", async (req: Request, res: Response) => {
 app.listen(port, () => {
   console.log(`Server started at http://localhost:${port}`);
 });
-
