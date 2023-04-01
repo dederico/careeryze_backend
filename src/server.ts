@@ -103,7 +103,7 @@ app.post("/api/chat", async (req: Request, res: Response) => {
       const completion = await openai.createCompletion(apiRequestBody);
 
       currentQuestionIndex++;
-      res.json({ message: completion.data.choices[0].text });
+      res.json({ message: completion.data.choices[0].text?.trim() });
     }
 
     // Otherwise, if we have finished all the questions, just send a confirmation message
@@ -124,7 +124,7 @@ app.post("/api/chat", async (req: Request, res: Response) => {
     };
     const completion = await openai.createCompletion(apiRequestBody);
 
-    res.json({ message: completion.data.choices[0].text });
+    res.json({ message: completion.data.choices[0].text?.trim() });
 
   } catch (error) {
     if (error instanceof Error) {
