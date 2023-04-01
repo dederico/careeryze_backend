@@ -49,7 +49,8 @@ const questions = [
 // Define a function to get the next question based on the current index
 function getNextQuestion(currentIndex: number): string {
   if (currentIndex < questions.length) {
-    return questions[currentIndex];
+    const question = questions[currentIndex].replace(/[\r\n]+/g, "");
+    return question;
   }
   return "We're done with the questions. Is there anything else I can help you with?";
 }
@@ -88,7 +89,7 @@ app.post("/api/chat", async (req: Request, res: Response) => {
         model: "text-davinci-002",
         messages: [
           { role: "system", content: " Gracias por responser todas las preguntas"},
-          ...requestMessages
+          ...requestMessages.map(({ role, content }) => ({ role, content: content.replace(/[\r\n]+/g, "") }))
         ],
         max_tokens: 150,
         temperature: 0.5,
@@ -110,7 +111,7 @@ app.post("/api/chat", async (req: Request, res: Response) => {
       messages: [
 
         {role: "system", content: "Gracias por responder todas las preguntas."},
-        ...requestMessages,
+        ...requestMessages.map(({ role, content }) => ({ role, content: content.replace(/[\r\n]+/g, "") }))
       ],
       max_tokens: 100,
       temperature: 0.5,
