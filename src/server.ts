@@ -68,7 +68,7 @@ console.log("Initialized initial conversation state:", initialState);
 function getPrompt(state: ConversationState): string {
   const question = state.questions[state.currentQuestion];
   const answer = state.answers[state.currentQuestion] || "";
-  const prompt = `${question}\n${answer}\n`;
+  const prompt = `${question}\n${answer}\n`.replace(/[\r\n]+/g, "");
   console.log("Updated prompt:", prompt);
   return prompt;
 }
