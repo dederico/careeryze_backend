@@ -97,7 +97,6 @@ app.post("/api/chat", async (req: Request, res: Response) => {
   const requestMessages: ChatCompletionRequestMessage[] = req.body.messages;
   console.log("Received request messages:", requestMessages);
 
-
   try {
     let tokenCount = 0;
 
@@ -127,15 +126,21 @@ app.post("/api/chat", async (req: Request, res: Response) => {
     };
     const completion = await openai.createCompletion(apiRequestBody);
 
-    const response = completion.data.choices[0]?.text?.trim() ?? '';
-    conversationState.answers[conversationState.currentQuestion] = response;
+    const botResponse = completion.data.choices[0]?.text?.trim() ?? '';
+
+    conversationState.answers[conversationState.currentQuestion] = botResponse;
     advanceConversation(conversationState);
 
+    let finalResponse = botResponse;
+
+    // Check if the conversation is complete and construct final response
     if (isConversationComplete(conversationState)) {
       conversationState = initialState;
+      const answers = conversationState.answers.join("\n");
+      finalResponse = `¡Gracias por responder a nuestras preguntas! Aquí está un resumen de tus respuestas:\n${answers}`;
     }
 
-    res.json(completion.data);
+    res.json({ response: finalResponse });
   } catch (error) {
     if (error instanceof Error) {
       console.error(error);
@@ -143,6 +148,7 @@ app.post("/api/chat", async (req: Request, res: Response) => {
     res.status(500).send("Something went wrong");
   }
 });
+
 
 // Start the server
 app.listen(port, () => {
