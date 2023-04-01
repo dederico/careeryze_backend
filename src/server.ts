@@ -9,6 +9,7 @@ import {
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import GPT3TokenizerImport from "gpt3-tokenizer";
+import { AxiosRequestConfig } from "axios";
 
 const GPT3Tokenizer: typeof GPT3TokenizerImport =
   typeof GPT3TokenizerImport === "function"
@@ -62,7 +63,8 @@ let currentQuestionIndex = 0;
 // Define the app.post endpoint
 app.post("/api/chat", async (req: Request, res: Response) => {
   const requestMessages: ChatCompletionRequestMessage[] = req.body.messages;
-
+{
+}
   try {
     let tokenCount = 0;
 
@@ -71,9 +73,20 @@ app.post("/api/chat", async (req: Request, res: Response) => {
       tokenCount += tokens;
     });
 
+    const authHeader: { Authorization?: string } = process.env.AUTH ? { Authorization: process.env.AUTH } : {};
+    const options: AxiosRequestConfig =  {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: 'application/json, text/plain, */*',
+        'User-Agent': 'OpenAI/NodeJS/3.2.1',
+        'Content-Length': 264,
+        ...authHeader
+      },
+    };
+
     const moderationResponse = await openai.createModeration({
       input: requestMessages[requestMessages.length - 1].content,
-    });
+    }, options);
     if (moderationResponse.data.results[0]?.flagged) {
       return res.status(400).send("Message is inappropriate");
     }
@@ -100,13 +113,14 @@ app.post("/api/chat", async (req: Request, res: Response) => {
         presence_penalty: 0.6,
         frequency_penalty: 0.6,
       };
-      const completion = await openai.createCompletion(apiRequestBody);
+      const completion = await openai.createCompletion(apiRequestBody,options);
 
       currentQuestionIndex++;
       res.json({ message: completion.data.choices[0].text?.trim() });
     }
 
     // Otherwise, if we have finished all the questions, just send a confirmation message
+
     const apiRequestBody: CreateChatCompletionRequest = {
       model: "text-davinci-002",
       messages: [
@@ -122,7 +136,7 @@ app.post("/api/chat", async (req: Request, res: Response) => {
       presence_penalty: 0.6,
       frequency_penalty: 0.6,
     };
-    const completion = await openai.createCompletion(apiRequestBody);
+    const completion = await openai.createCompletion(apiRequestBody, options);
 
     res.json({ message: completion.data.choices[0].text?.trim() });
 
