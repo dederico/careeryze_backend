@@ -16,8 +16,6 @@ const GPT3Tokenizer: typeof GPT3TokenizerImport =
     : (GPT3TokenizerImport as any).default;
 
 const tokenizer = new GPT3Tokenizer({ type: "gpt3" });
-console.log("Initialized tokenizer:", tokenizer);
-
 
 function getTokens(input: string): number {
   const tokens = tokenizer.encode(input);
@@ -38,64 +36,30 @@ app.use(
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
-console.log("Initialized configuration:", configuration);
 const openai = new OpenAIApi(configuration);
-console.log("Initialized OpenAI API:", openai);
 
+// Define an array of questions
+const questions = [
+  "Cuáles son tus hobbies e intereses?",
+  "Cuáles son tus habilidades y fortalezas? Eres bueno con los números, con la comunicación, resolviendo problemas o en trabajos manuales?",
+  "Prefieres trabajar solo o en equipo? Estás más interesado en trabajar en una oficina o al aire libre?",
+  "Cuál es tu nivel más alto de estudios? Tienes algún certificado, entrenamiento o bootcamp?",
+];
 
-// Define an object to keep track of the conversation state
-interface ConversationState {
-  currentQuestion: number;
-  questions: string[];
-  answers: string[];
+// Define a function to get the next question based on the current index
+function getNextQuestion(currentIndex: number): string {
+  if (currentIndex < questions.length) {
+    return questions[currentIndex];
+  }
+  return "Ya hemos terminado con las preguntas. ¿Hay algo más en lo que pueda ayudarte?";
 }
 
-// Initialize the conversation state
-const initialState: ConversationState = {
-  currentQuestion: 0,
-  questions: [
-    "Cuáles son tus hobbies e intereses?",
-    "Cuáles son tus habilidades y fortalezas? Eres bueno con los números, con la comunicación, resolviendo problemas, o en trabajos manuales?",
-    "Prefieres trabajar solo o en equipo? Estás más interesado en trabajar en una oficina, o al aire libre?",
-    "Cuál es tu nivel más alto de estudios? Tienes algún certificado, entrenamiento o bootcamp?",
-  ],
-  answers: [],
-};
-console.log("Initialized initial conversation state:", initialState);
+// Define a variable to keep track of the current question index
+let currentQuestionIndex = 0;
 
-
-// Define a function to update the prompt based on the user's responses
-function getPrompt(state: ConversationState): string {
-  const question = state.questions[state.currentQuestion];
-  const answer = state.answers[state.currentQuestion] || "";
-  const prompt = `${question}\n${answer}\n`.replace(/[\r\n]+/g, "");
-  console.log("Updated prompt:", prompt);
-  return prompt;
-}
-
-// Define a function to advance to the next question in the conversation
-function advanceConversation(state: ConversationState): void {
-  state.currentQuestion++;
-  console.log("Advanced conversation to question:", state.currentQuestion);
-
-}
-
-// Define a function to check if the conversation is complete
-function isConversationComplete(state: ConversationState): boolean {
-  const isComplete = state.currentQuestion >= state.questions.length;
-  console.log("Conversation is complete:", isComplete);
-  return isComplete;
-}
-
-// Initialize the conversation state
-let conversationState = initialState;
-console.log("Initialized conversation state:", conversationState);
-
-
-// Define the chat endpoint
+// Define the app.post endpoint
 app.post("/api/chat", async (req: Request, res: Response) => {
   const requestMessages: ChatCompletionRequestMessage[] = req.body.messages;
-  console.log("Received request messages:", requestMessages);
 
   try {
     let tokenCount = 0;
@@ -112,35 +76,40 @@ app.post("/api/chat", async (req: Request, res: Response) => {
       return res.status(400).send("Message is inappropriate");
     }
 
-    const prompt = getPrompt(conversationState).replace(/\r?\n|\r/g, "");
+    // If we haven't finished all the questions, get the next question and update the current question index
+    if (currentQuestionIndex < questions.length) {
+      const prompt = getNextQuestion(currentQuestionIndex);
+      tokenCount += getTokens(prompt);
+      if (tokenCount > 4000) {
+        return res.status(400).send("Message is too long");
+      }
 
-    tokenCount += getTokens(prompt);
-    if (tokenCount > 4000) {
-      return res.status(400).send("Message is too long");
+      const apiRequestBody: CreateChatCompletionRequest = {
+        model: "gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: prompt },
+          ...requestMessages,
+        ],
+        temperature: 0.6,
+      };
+      const completion = await openai.createChatCompletion(apiRequestBody);
+
+      currentQuestionIndex++;
+      res.json(completion.data);
+    } else {
+      // If we have finished all the questions, just send a confirmation message
+      const apiRequestBody: CreateChatCompletionRequest = {
+        model: "davinci",
+        messages: [
+          { role: "system", content: "Gracias por responder todas las preguntas." },
+          ...requestMessages,
+        ],
+        temperature: 0.6,
+      };
+      const completion = await openai.createChatCompletion(apiRequestBody);
+
+      res.json(completion.data);
     }
-
-    const apiRequestBody: CreateChatCompletionRequest = {
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "system", content: prompt }, ...requestMessages],
-      temperature: 0.6,
-    };
-    const completion = await openai.createCompletion(apiRequestBody);
-
-    const botResponse = completion.data.choices[0]?.text?.trim() ?? '';
-
-    conversationState.answers[conversationState.currentQuestion] = botResponse;
-    advanceConversation(conversationState);
-
-    let finalResponse = botResponse;
-
-    // Check if the conversation is complete and construct final response
-    if (isConversationComplete(conversationState)) {
-      conversationState = initialState;
-      const answers = conversationState.answers.join("\n");
-      finalResponse = `¡Gracias por responder a nuestras preguntas! Aquí está un resumen de tus respuestas:\n${answers}`;
-    }
-
-    res.json({ response: finalResponse });
   } catch (error) {
     if (error instanceof Error) {
       console.error(error);
@@ -149,8 +118,8 @@ app.post("/api/chat", async (req: Request, res: Response) => {
   }
 });
 
-
 // Start the server
 app.listen(port, () => {
   console.log(`Server started at http://localhost:${port}`);
 });
+
