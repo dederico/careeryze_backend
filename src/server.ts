@@ -16,6 +16,8 @@ const GPT3Tokenizer: typeof GPT3TokenizerImport =
     : (GPT3TokenizerImport as any).default;
 
 const tokenizer = new GPT3Tokenizer({ type: "gpt3" });
+console.log("Initialized tokenizer:", tokenizer);
+
 
 function getTokens(input: string): number {
   const tokens = tokenizer.encode(input);
@@ -36,7 +38,10 @@ app.use(
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
+console.log("Initialized configuration:", configuration);
 const openai = new OpenAIApi(configuration);
+console.log("Initialized OpenAI API:", openai);
+
 
 // Define an object to keep track of the conversation state
 interface ConversationState {
@@ -56,30 +61,42 @@ const initialState: ConversationState = {
   ],
   answers: [],
 };
+console.log("Initialized initial conversation state:", initialState);
+
 
 // Define a function to update the prompt based on the user's responses
 function getPrompt(state: ConversationState): string {
   const question = state.questions[state.currentQuestion];
   const answer = state.answers[state.currentQuestion] || "";
-  return `${question}\n${answer}\n`;
+  const prompt = `${question}\n${answer}\n`;
+  console.log("Updated prompt:", prompt);
+  return prompt;
 }
 
 // Define a function to advance to the next question in the conversation
 function advanceConversation(state: ConversationState): void {
   state.currentQuestion++;
+  console.log("Advanced conversation to question:", state.currentQuestion);
+
 }
 
 // Define a function to check if the conversation is complete
 function isConversationComplete(state: ConversationState): boolean {
-  return state.currentQuestion >= state.questions.length;
+  const isComplete = state.currentQuestion >= state.questions.length;
+  console.log("Conversation is complete:", isComplete);
+  return isComplete;
 }
 
 // Initialize the conversation state
 let conversationState = initialState;
+console.log("Initialized conversation state:", conversationState);
+
 
 // Define the chat endpoint
 app.post("/api/chat", async (req: Request, res: Response) => {
   const requestMessages: ChatCompletionRequestMessage[] = req.body.messages;
+  console.log("Received request messages:", requestMessages);
+
 
   try {
     let tokenCount = 0;
