@@ -18,6 +18,7 @@ const GPT3Tokenizer: typeof GPT3TokenizerImport =
 const tokenizer = new GPT3Tokenizer({ type: "gpt3" });
 
 function getTokens(input: string): number {
+  input = input.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const tokens = tokenizer.encode(input);
   return tokens.text.length;
 }
