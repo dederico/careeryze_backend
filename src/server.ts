@@ -39,89 +39,84 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 
 app.post("/api/chat", async (req: Request, res: Response) => {
-  const requestMessages: ChatCompletionRequestMessage[] = req.body.messages;
+
+  const questions = [
+    "Cuáles son tus hobbies e intereses?",
+    "Cuáles son tus habilidades y fortalezas? Eres bueno con los números, con la comunicación, resolviendo problemas, o en trabajos manuales?",
+    "Prefieres trabajar solo o en equipo? Estás más interesado en trabajar en una oficina, o al aire libre?",
+    "Cuál es tu nivel más alto de estudios? Tienes algún certificado, entrenamiento o bootcamp?",
+  ];
+
+  const requestMessages: ChatCompletionRequestMessage[] = [];
+  for (let i = 0; i < questions.length; i++) {
+    const question = questions[i];
+
+    // Ask the user the current question
+    requestMessages.push({
+      role: "user",
+      content: question,
+    });
+
+    // Wait for the user's answer
+    const answer = await new Promise<string>((resolve) => {
+      app.post("/api/answer", (req: Request, res: Response) => {
+        const answer = req.body.answer;
+        resolve(answer);
+        res.end();
+      });
+    });
+
+    // Add the user's answer to the request messages
+    requestMessages.push({
+      role: "user",
+      content: answer,
+    });
+  }
 
   try {
-    let tokenCount = 0;
-    let originalPrompt = `Eres "Careeryzer", 
-    un experto coach de carrera, y asistente basado en IA que 
-    te ayuda a crecer y desarrollarte en tu carrera profesional. `;
+    // Use the request messages to generate the prompt
+    const prompt = requestMessages
+      .map((msg) => msg.content)
+      .join("\n");
 
-    // NamePrompt
-    const namePrompt = `Por favor, presentate, y dime tu nombre.`;
-    tokenCount += getTokens(namePrompt);
-    originalPrompt += namePrompt;
-
-    // Hobbies Prompt
-    const hobbiesPrompt = `Cuáles son tus hobbies e intereses?`;
-    tokenCount += getTokens(hobbiesPrompt);
-    originalPrompt += " " + hobbiesPrompt;
-
-    // Skills Prompt
-    const skillPrompt = `Cuáles son tus habilidades y fortalezas?`;
-    tokenCount += getTokens(skillPrompt);
-    originalPrompt += " " + skillPrompt;
-
-    // Work Experience
-    const experiencePrompt = `Cuál es tu experiencia en la industria?`;
-    tokenCount += getTokens(experiencePrompt);
-    originalPrompt += " " + experiencePrompt;
-
-    requestMessages.forEach((msg) => {
-      const tokens = getTokens(msg.content);
-      tokenCount += tokens;
-      originalPrompt += ` ${msg.content}`;
-    });
-
-    const moderationResponse = await openai.createModeration({
-      input: requestMessages[requestMessages.length - 1].content,
-    });
-    if (moderationResponse.data.results[0]?.flagged) {
-      return res.status(400).send("Message is inappropriate");
-    }
-
-    const prompt = `Eres "Careeryzer", un experto coach de carrera`;
-
-    tokenCount += getTokens(prompt + originalPrompt);
-    if (tokenCount > 4000) {
-      return res.status(400).send("Message is too long");
-    }
-
+    // Create the chat completion request
     const apiRequestBody: CreateChatCompletionRequest = {
-        model: "text-davinci-002",
-        messages: [
-          {
-            role: "user",
-            content: requestMessages[requestMessages.length - 1].content,
-          },
-          {
-            role: "system",
-            content: originalPrompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 60,
-        n: 1,
-        stop: "###",
-      };
-      const completion = await openai.createChatCompletion(apiRequestBody);
-      
-      const [response] = completion.data.choices;
-      const outputMessage = response.message;
-      res.json([{ role: "user", content: requestMessages[requestMessages.length - 1].content }, { role: "system", content: outputMessage }]);
-      
-      res.json(completion.data);
-    } catch (error) {
-      if (error instanceof Error) {
-        // @ts-ignore
-        console.error(error);
-      }
-      res.status(500).send("Something went wrong");
-    }
+      model: "text-davinci-002",
+      messages: [{ role: "system", content: prompt }],
+      temperature: 0.6,
+    };
+    const completion = await openai.createChatCompletion(apiRequestBody);
+
+    res.json(completion.data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong");
+  }
+  // Use the request messages to generate the prompt
+  const prompt = requestMessages
+    .map((msg) => msg.content)
+    .join("\n");
+
+  // Create the chat completion request
+  const apiRequestBody: CreateChatCompletionRequest = {
+    model: "text-davinci-002",
+    messages: [{ role: "system", content: prompt }],
+    temperature: 0.6,
+  };
+  const completion = await openai.createChatCompletion(apiRequestBody);
+
+  res.json(completion.data);
+
+  const moderationResponse = await openai.createModeration({
+    input: requestMessages[requestMessages.length - 1].content,
   });
-  
-  // Start the server
-  app.listen(port, () => {
-    console.log(`Server started at http://localhost:${port}`);
-  });
-      
+  if (moderationResponse.data.results[0]?.flagged) {
+    return res.status(400).send("Message is inappropriate");
+  }
+
+});
+
+// Start the server
+app.listen(port, () => {
+  console.log(`Server started at http://localhost:${port}`);
+});
