@@ -5,6 +5,7 @@ import {
   CreateChatCompletionRequest,
   Configuration,
   OpenAIApi,
+  ChatCompletionRequestMessageRoleEnum,
 } from "openai";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
@@ -92,11 +93,17 @@ app.post("/api/chat", async (req: Request, res: Response) => {
   // Log a message with meta data
   logger.log({
     level: "info",
-    message: "Message with meta data",
-    meta: { some: "additional", data: "here" },
+    message: req.toString(),
+    meta: { some: "THE", data: "REQUEST" },
   });
 
   const requestMessages: ChatCompletionRequestMessage[] = [];
+
+  logger.log({
+    level: "info",
+    message: requestMessages[0].toString(),
+  });
+
   for (let i = 0; i < questions.length; i++) {
     const question = questions[i];
 
