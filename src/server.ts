@@ -151,7 +151,7 @@ app.post("/api/chat", async (req: Request, res: Response) => {
 
     res.json(completion.data);
   } catch (error) {
-    logger.error(error.message, { stack: error.stack });
+    logger.error(`An error has ocurred: ${error}`);
     res.status(500).send("Something went wrong");
   }
   // Use the request messages to generate the prompt
