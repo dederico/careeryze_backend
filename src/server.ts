@@ -58,12 +58,18 @@ app.post("/api/chat", async (req: Request, res: Response) => {
     });
 
     // Wait for the user's answer
+    let timeout: NodeJS.Timeout;
     const answer = await new Promise<string>((resolve) => {
+      timeout = setTimeout(() => {
+        res.status(500).send("Request timed out");
+      }, 5000);
       app.post("/api/answer", (req: Request, res: Response) => {
         const answer = req.body.answer;
+        clearTimeout(timeout);
         resolve(answer);
         res.end();
       });
+
     });
 
     // Add the user's answer to the request messages
@@ -71,6 +77,7 @@ app.post("/api/chat", async (req: Request, res: Response) => {
       role: "user",
       content: answer,
     });
+
   }
 
   try {
