@@ -9,6 +9,21 @@ import {
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import GPT3TokenizerImport from "gpt3-tokenizer";
+import expressWinston from "express-winston";
+import winston from "winston";
+
+// Create a Winston logger instance
+const logger = winston.createLogger({
+  level: "info",
+  format: winston.format.json(),
+  defaultMeta: { service: "your-app-name" },
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: "error.log", level: "error" }),
+    new winston.transports.File({ filename: "combined.log" }),
+  ],
+});
+
 
 const GPT3Tokenizer: typeof GPT3TokenizerImport =
   typeof GPT3TokenizerImport === "function"
@@ -33,6 +48,33 @@ app.use(
   })
 );
 
+// Create a middleware for logging requests and responses
+app.use(
+  expressWinston.logger({
+    transports: [
+      new winston.transports.Console(),
+      new winston.transports.File({ filename: "access.log" }),
+    ],
+    format: winston.format.combine(
+      winston.format.colorize(),
+      winston.format.json()
+    ),
+  })
+);
+
+// Create a middleware for logging errors
+app.use(
+  expressWinston.errorLogger({
+    transports: [
+      new winston.transports.Console(),
+      new winston.transports.File({ filename: "error.log" }),
+    ],
+  })
+);
+
+// Log an error message
+logger.error("TEST Error message here");
+
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -46,6 +88,13 @@ app.post("/api/chat", async (req: Request, res: Response) => {
     "Prefieres trabajar solo o en equipo? Estás más interesado en trabajar en una oficina, o al aire libre?",
     "Cuál es tu nivel más alto de estudios? Tienes algún certificado, entrenamiento o bootcamp?",
   ];
+
+  // Log a message with meta data
+  logger.log({
+    level: "info",
+    message: "Message with meta data",
+    meta: { some: "additional", data: "here" },
+  });
 
   const requestMessages: ChatCompletionRequestMessage[] = [];
   for (let i = 0; i < questions.length; i++) {
@@ -80,6 +129,12 @@ app.post("/api/chat", async (req: Request, res: Response) => {
 
   }
 
+  logger.log({
+    level: "info",
+    message: "API endpoint called",
+    meta: { endpoint: "/api/chat", method: "POST" },
+  });
+
   try {
     // Use the request messages to generate the prompt
     const prompt = requestMessages
@@ -96,7 +151,7 @@ app.post("/api/chat", async (req: Request, res: Response) => {
 
     res.json(completion.data);
   } catch (error) {
-    console.error(error);
+    logger.error(error.message, { stack: error.stack });
     res.status(500).send("Something went wrong");
   }
   // Use the request messages to generate the prompt
