@@ -62,7 +62,7 @@ app.post("/api/chat", async (req: Request, res: Response) => {
     const answer = await new Promise<string>((resolve) => {
       timeout = setTimeout(() => {
         res.status(599).send("Request timed out");
-      }, 5000);
+      }, 50000);
       app.post("/api/answer", (req: Request, res: Response) => {
         const answer = req.body.answer;
         clearTimeout(timeout);
