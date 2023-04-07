@@ -59,19 +59,21 @@ app.post("/api/chat", async (req: Request, res: Response) => {
     const prompt =
       `Hello, Welcome to Careeryze chatbot (early stage for manufacturing only), your career advisor if you haven’t gone to college. I can provide you a couple recommended career paths with short answers to four questions: 1) What are your hobbies and interests? 2) What are your current skills and strengths? 3) Do you prefer working independently or in a team? 4) What is your highest level of education? Please enter in the format question number. your short answer.
 
-Please enter your answers to the above questions in the following format:
+      Please enter your answers to the above questions in the following format:
 
-Hobbies and interests: running
-Skills and strengths: problem solver
-Work preferences: in a team
-Highest level of education: some high school
-Act as career guidance expert specializing in non-college-educated job seekers and knowledgeable in manufacturing. Build three 20 years into the future recommended career paths based on my profile. Indicate the additional training, certifications, and experience in each respective field. Indicate the expected monthly income in USD dollars in the Mexican market for each role in each path. Include one option in the manufacturing industry. Add a column with the yearly % growth projections over the next 20 years of each job. Table format. At the end of each table, add the Total 20-year earnings range if I follow the path in USD. Only reliable sources are used. Here is my profile:
+      Hobbies and interests: running
+      Skills and strengths: problem solver
+      Work preferences: in a team
+      Highest level of education: some high school
+      Act as career guidance expert specializing in non-college-educated job seekers and knowledgeable in manufacturing. Build three 20 years into the future recommended career paths based on my profile. Indicate the additional training, certifications, and experience in each respective field. Indicate the expected monthly income in USD dollars in the Mexican market for each role in each path. Include one option in the manufacturing industry. Add a column with the yearly % growth projections over the next 20 years of each job. Table format. At the end of each table, add the Total 20-year earnings range if I follow the path in USD. Only reliable sources are used. Here is my profile:
 
-Hobbies and interests:
-Skills and strengths:
-Work preferences:
-Highest level of education:
-Please replace the blank spaces with your answers to the questions. When you're finished, please enter 7.`;
+      Hobbies and interests:
+      Skills and strengths:
+      Work preferences:
+      Highest level of education:
+      Please replace the blank spaces with your answers to the questions. When you're finished, please enter 7.
+      
+      :: PLEASE AVOID GIVING ADVICE OUTSIDE OF MANUFACTURING, KEEP THE CONVERSATION CLOSED TO CAREER ADVICE AND TO MANUFACTURING`;
 
     tokenCount += getTokens(prompt);
     if (tokenCount > 4000) {
